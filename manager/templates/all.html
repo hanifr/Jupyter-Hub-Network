@@ -1,0 +1,73 @@
+{% extends 'base.html' %} {% block content %}
+
+<nav class="navbar navbar-expand-md fixed-top">
+  <a href="/logout" class="btn btn-secondary">Logout</a>
+</nav>
+
+<div class="allview">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th scope="col">Username</th>
+        <th scope="col">Activated</th>
+        <th scope="col">Action (not implemented yet)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user[0] }}</td>
+        <td>{% if user[1] == 1 %} Yes {% else %} No {% endif %}</td>
+
+        <td>
+          {% if user[1] == 1 %}
+          <a href="#" class="btn btn-warning">Deactivate</a> {% else %}
+          <a href="#" class="btn btn-success">Activate</a> {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <hr />
+
+  <form class="form form-add" action="/adduser" method="POST">
+    <h1 class="h3 mb-3 font-weight-normal">Add a user</h1>
+
+    {% with messages = get_flashed_messages() %} {% if messages %} {% for
+    message in messages %}
+    <div class="alert alert-secondary" role="alert">{{ message }}</div>
+    {% endfor %} {% endif %} {% endwith %}
+
+    <label for="username" class="sr-only">Email address</label>
+    <input
+      type="text"
+      name="username"
+      class="form-control"
+      placeholder="Username"
+      required
+      autofocus
+    />
+    <label for="password" class="sr-only">Password</label>
+    <input
+      type="password"
+      name="password"
+      class="form-control"
+      placeholder="Password"
+      required
+    />
+
+    <label for="repeated-password" class="sr-only">Password</label>
+    <input
+      type="password"
+      name="repeated_password"
+      class="form-control"
+      placeholder="Repeat password"
+      required
+    />
+
+    <button class="btn btn-lg btn-primary btn-block" type="submit">Add</button>
+  </form>
+</div>
+
+{% endblock %}

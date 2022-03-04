@@ -1,0 +1,76 @@
+version: "3.1"
+
+services:
+  hub:
+    build:
+      context: ./jupyterhub
+    ports:
+      - "8080:8000"
+      #- "443:443" # When using SSL.
+    container_name: jupyterhub
+    volumes:
+      # Bind Docker socket on the host so we can connect to the daemon from
+      # within the container
+      - "/var/run/docker.sock:/var/run/docker.sock:rw"
+      # Bind Docker volume on host for JupyterHub database and cookie secrets
+      - "data:/data"
+    environment:
+      # All containers will join this network
+      DOCKER_NETWORK_NAME: ${DOCKER_NETWORK_NAME}
+      # JupyterHub will spawn this Notebook image for users.
+      # Important: Build a jupyter-notebook image named 'jupyterhub-user' beforehand.
+      DOCKER_NOTEBOOK_IMAGE: ${LOCAL_NOTEBOOK_IMAGE}
+      # Notebook directory inside user image
+      DOCKER_NOTEBOOK_DIR: ${DOCKER_NOTEBOOK_DIR}
+    links:
+      - database
+    command: >
+      jupyterhub -f /srv/jupyterhub/jupyterhub_config.py
+    restart: always
+
+  usermanager:
+    build: manager/
+    ports:
+      - "5000:5000"
+    container_name: usermanager
+    volumes:
+      - ./manager-data:/usr/src/app/data
+    environment:
+      # The app.py uses this to read the admin password.
+      ROOT_PASSWORD_FILE: /run/secrets/adminpw
+    secrets:
+      - adminpw
+    links:
+      - database
+    restart: always
+
+  database:
+    image: mariadb:latest
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./maria-data:/var/lib/mysql
+    container_name: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/adminpw
+    secrets:
+      - adminpw
+    restart: always
+
+volumes:
+  # JupyterHub container data volume.
+  # Important: Needs to be created manually beforehand.
+  data:
+    external:
+      name: ${DATA_VOLUME_HOST}
+
+networks:
+  # Networkfor everything.
+  # Important: Needs to be created manually beforehand.
+  default:
+    external:
+      name: ${DOCKER_NETWORK_NAME}
+
+secrets:
+  adminpw:
+    file: ./adminpw.txt
